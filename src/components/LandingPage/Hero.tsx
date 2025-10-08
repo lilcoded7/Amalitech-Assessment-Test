@@ -11,16 +11,24 @@ export default function HeroPage() {
     let bottomOffset = 0;
 
     const animate = () => {
+      // Only proceed if both sliders exist
+      if (!topSlider || !bottomSlider) return;
+
       topOffset -= 0.5;
       bottomOffset += 0.5;
 
-      if (topSlider) topSlider.style.transform = `translateX(${topOffset}px)`;
-      if (bottomSlider)
-        bottomSlider.style.transform = `translateX(${bottomOffset}px)`;
+      // Apply transforms
+      topSlider.style.transform = `translateX(${topOffset}px)`;
+      bottomSlider.style.transform = `translateX(${bottomOffset}px)`;
 
-      if (Math.abs(topOffset) > topSlider.scrollWidth / 2) topOffset = 0;
-      if (Math.abs(bottomOffset) > bottomSlider.scrollWidth / 2)
+      // Reset offsets safely
+      if (Math.abs(topOffset) > (topSlider.scrollWidth ?? 0) / 2) {
+        topOffset = 0;
+      }
+
+      if (Math.abs(bottomOffset) > (bottomSlider.scrollWidth ?? 0) / 2) {
         bottomOffset = 0;
+      }
 
       requestAnimationFrame(animate);
     };
@@ -43,7 +51,7 @@ export default function HeroPage() {
   ];
 
   const brandsTop = [...brandLogos, ...brandLogos];
-  const brandsBottom = [...brandLogos.reverse(), ...brandLogos.reverse()];
+  const brandsBottom = [...[...brandLogos].reverse(), ...[...brandLogos].reverse()];
 
   return (
     <div className="w-full min-h-screen bg-[#eeeeee] font-sans text-gray-900 overflow-hidden">
@@ -55,32 +63,22 @@ export default function HeroPage() {
         </div>
 
         <div className="hidden md:flex space-x-8 text-sm font-medium">
-          <a href="#" className="hover:text-[#006400] transition-colors">
-            Platform
-          </a>
-          <a href="#" className="hover:text-[#006400] transition-colors">
-            Solutions
-          </a>
-          <a href="#" className="hover:text-[#006400] transition-colors">
-            Company
-          </a>
-          <a href="#" className="hover:text-[#006400] transition-colors">
-            Resources
-          </a>
-          <a href="#" className="hover:text-[#006400] transition-colors">
-            Partners
-          </a>
+          <a href="#" className="hover:text-[#006400] transition-colors">Platform</a>
+          <a href="#" className="hover:text-[#006400] transition-colors">Solutions</a>
+          <a href="#" className="hover:text-[#006400] transition-colors">Company</a>
+          <a href="#" className="hover:text-[#006400] transition-colors">Resources</a>
+          <a href="#" className="hover:text-[#006400] transition-colors">Partners</a>
         </div>
 
-        <button className="bg-[#006400] hover:bg-[#004d00] text-white font-semibold px-6 py-3 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95 border border-[#004d00]">
+        <button className="bg-[#006400] hover:bg-[#004d00] pl-5 text-white font-semibold px-6 py-3 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95 border border-[#004d00]">
           Book a meeting
         </button>
       </nav>
 
       {/* Hero Section */}
       <section className="flex flex-col md:flex-row items-stretch pt-40 md:pt-48 min-h-[90vh]">
-        {/* Text Section (FLUSH LEFT) */}
-        <div className="flex flex-col justify-center py-24 w-full md:w-[55%] pr-10 pl-0 md:pl-0 lg:pl-0">
+        {/* Text Section */}
+        <div className="flex flex-col justify-center py-24 w-full md:w-[55%] pr-10">
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight md:leading-snug lg:leading-tight mb-8 tracking-tight">
             The most reliable way to{" "}
             <span className="block mt-2">manage digital assets</span>
@@ -94,7 +92,7 @@ export default function HeroPage() {
           </button>
         </div>
 
-        {/* Image Section (same height & width as text div) */}
+        {/* Image Section */}
         <div className="w-full md:w-[45%]">
           <div
             className="bg-white rounded-tl-3xl shadow-lg w-full h-full flex"
@@ -109,13 +107,10 @@ export default function HeroPage() {
         </div>
       </section>
 
-      {/* Brands Section with smooth animation */}
+      {/* Brands Section */}
       <section className="bg-white py-12 overflow-hidden">
         <div className="relative flex flex-col gap-6">
-          <div
-            id="brandsTop"
-            className="flex gap-12 whitespace-nowrap will-change-transform"
-          >
+          <div id="brandsTop" className="flex gap-12 whitespace-nowrap will-change-transform">
             {brandsTop.map((logo, i) => (
               <img
                 key={i}
@@ -126,10 +121,7 @@ export default function HeroPage() {
             ))}
           </div>
 
-          <div
-            id="brandsBottom"
-            className="flex gap-12 whitespace-nowrap will-change-transform"
-          >
+          <div id="brandsBottom" className="flex gap-12 whitespace-nowrap will-change-transform">
             {brandsBottom.map((logo, i) => (
               <img
                 key={i}
