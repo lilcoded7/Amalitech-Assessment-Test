@@ -1,358 +1,366 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import api from "@/lib/axios";
 
-// ---------- types ----------
+// ---------- Types ----------
 interface VaultNode {
-  id: string;
+  id: string | number;
   name: string;
   type: "folder" | "file";
   ext?: string;
   size?: string;
   children?: VaultNode[];
+  parent?: number | null;
+  is_favorite?: boolean;
+  is_trashed?: boolean;
 }
 
-// ---------- component ----------
 export default function Vault() {
-  // ---------- initial data & state ----------
-  const initialRoot: VaultNode = {
+  const router = useRouter();
+
+  // --- State ---
+  const [rootNode, setRootNode] = useState<VaultNode>({
     id: "root",
     name: "my vault",
     type: "folder",
-    children: [
-      {
-        id: "c1",
-        name: "Baker LLP",
-        type: "folder",
-        children: [
-          {
-            id: "f1",
-            name: "merger.pdf",
-            type: "file",
-            ext: "pdf",
-            size: "1.4",
-          },
-        ],
-      },
-      {
-        id: "c2",
-        name: "First Credit",
-        type: "folder",
-        children: [
-          { id: "f2", name: "SOC2.pdf", type: "file", ext: "pdf", size: "2.2" },
-        ],
-      },
-      { id: "c3", name: "policies", type: "folder", children: [] },
-      { id: "x1", name: "budget.xlsx", type: "file", ext: "xlsx", size: "0.9" },
-    ],
+    children: [],
+  });
+  const [currentFolderId, setCurrentFolderId] = useState<string | number>("root");
+  const [activeFilter, setActiveFilter] = useState<"all" | "favorites" | "trash">("all");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | number | null>(null);
+  const [modalConfig, setModalConfig] = useState<{
+    show: boolean;
+    type: "folder" | "file" | "rename";
+    node?: VaultNode;
+  }>({ show: false, type: "folder" });
+
+  // --- Initial Fetch & Auth ---
+  useEffect(() => {
+    const token = localStorage.getItem("vault_token");
+    if (!token) {
+      router.push("/accounts/login");
+    } else {
+      fetchVaultData();
+    }
+  }, [router]);
+
+  const handleApiError = (error: any) => {
+    console.error("Vault Error:", error);
+    if (error.response?.status === 401) {
+      localStorage.removeItem("vault_token");
+      router.push("/accounts/login");
+    }
   };
 
-  const [currentFolder, setCurrentFolder] = useState<VaultNode>(initialRoot);
-  const [history, setHistory] = useState<VaultNode[]>([]);
-  const [showFolderModal, setShowFolderModal] = useState(false);
-  const [showFileModal, setShowFileModal] = useState(false);
+  const fetchVaultData = async () => {
+    try {
+      const res = await api.get("/v2/vault/nodes/");
+      const nodes = (Array.isArray(res.data) ? res.data : res.data?.results || []) as VaultNode[];
+      const root: VaultNode = { id: "root", name: "my vault", type: "folder", children: [] };
+      const nodeMap = new Map<string | number, VaultNode>();
 
-  const folderNameInput = useRef<HTMLInputElement>(null);
-  const fileNameInput = useRef<HTMLInputElement>(null);
-  const rootRef = useRef<VaultNode>(initialRoot);
+      nodes.forEach((n) => nodeMap.set(n.id, { ...n, children: [] }));
+      nodes.forEach((n) => {
+        const node = nodeMap.get(n.id)!;
+        if (n.parent === null || n.parent === 0) {
+          root.children?.push(node);
+        } else {
+          const parent = nodeMap.get(n.parent);
+          if (parent) parent.children?.push(node);
+          else root.children?.push(node);
+        }
+      });
+      setRootNode(root);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
 
-  // ---------- helpers ----------
-  const genId = () => "n" + Date.now() + Math.random().toString(36).substring(2, 6);
+  // --- Operations ---
+  const patchNode = async (id: number, data: Partial<VaultNode>) => {
+    try {
+      await api.patch(`/v2/vault/nodes/${id}/`, data);
+      await fetchVaultData();
+      setActiveMenu(null);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  const createNode = async (name: string, type: "folder" | "file") => {
+    if (!name.trim()) return;
+    try {
+      const parentId = currentFolderId === "root" ? 0 : Number(currentFolderId);
+      let finalName = name.trim();
+      if (type === "file" && !finalName.includes(".")) finalName += ".txt";
+      await api.post("/v2/vault/nodes/", { name: finalName, type, parent: parentId });
+      fetchVaultData();
+      setModalConfig({ ...modalConfig, show: false });
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  const deletePermanently = async (nodeId: string | number) => {
+    if (window.confirm("Permanent delete? This cannot be undone.")) {
+      try {
+        await api.delete(`/v2/vault/nodes/${nodeId}/`);
+        fetchVaultData();
+        setActiveMenu(null);
+      } catch (error) {
+        handleApiError(error);
+      }
+    }
+  };
+
+  // --- Helpers ---
+  const getPath = (node: VaultNode, targetId: string | number): VaultNode[] => {
+    if (node.id === targetId) return [node];
+    if (node.children) {
+      for (const child of node.children) {
+        const p = getPath(child, targetId);
+        if (p.length > 0) return [node, ...p];
+      }
+    }
+    return [];
+  };
+
+  const getAllNodes = (node: VaultNode, nodes: VaultNode[] = []): VaultNode[] => {
+    if (node.children) {
+      for (const child of node.children) {
+        nodes.push(child);
+        getAllNodes(child, nodes);
+      }
+    }
+    return nodes;
+  };
+
+  const path = getPath(rootNode, currentFolderId);
+  const currentFolder = path.length > 0 ? path[path.length - 1] : rootNode;
+  const history = path.slice(0, -1);
 
   const getIcon = (ext?: string, isFolder?: boolean) => {
     if (isFolder) return "fa-folder";
-    if (ext === "pdf") return "fa-file-pdf";
-    if (ext === "docx") return "fa-file-word";
-    if (ext === "xlsx") return "fa-file-excel";
-    if (ext === "txt") return "fa-file-alt";
-    return "fa-file";
-  };
-
-  // ---------- navigation ----------
-  const openFolder = (folder: VaultNode) => {
-    if (folder.type !== "folder") return;
-    setHistory((prev) => [...prev, currentFolder]);
-    setCurrentFolder(folder);
-  };
-
-  const goBack = () => {
-    if (history.length === 0) return;
-    const prevHistory = [...history];
-    const prevFolder = prevHistory.pop()!;
-    setHistory(prevHistory);
-    setCurrentFolder(prevFolder);
-  };
-
-  const resetToRoot = () => {
-    setHistory([]);
-    setCurrentFolder(rootRef.current);
-  };
-
-  // ---------- create folder / file ----------
-  const createFolderInCurrent = (name: string) => {
-    if (!name.trim()) return;
-    const newFolder: VaultNode = {
-      id: genId(),
-      name: name.trim(),
-      type: "folder",
-      children: [],
+    const icons: Record<string, string> = {
+      pdf: "fa-file-pdf",
+      docx: "fa-file-word",
+      txt: "fa-file-alt",
     };
-    setCurrentFolder((prev) => ({
-      ...prev,
-      children: [...(prev.children || []), newFolder],
-    }));
+    return icons[ext || ""] || "fa-file";
   };
 
-  const createFileInCurrent = (name: string) => {
-    if (!name.trim()) return;
-    let fileName = name.trim();
-    let ext = fileName.includes(".") ? fileName.split(".").pop()?.toLowerCase() : "txt";
-    if (!fileName.includes(".")) fileName += ".txt";
-
-    const newFile: VaultNode = {
-      id: genId(),
-      name: fileName,
-      type: "file",
-      ext,
-      size: (Math.random() * 5).toFixed(1),
-    };
-    setCurrentFolder((prev) => ({
-      ...prev,
-      children: [...(prev.children || []), newFile],
-    }));
-  };
-
-  // ---------- breadcrumb logic ----------
-  const findNodeById = (node: VaultNode, id: string): VaultNode | null => {
-    if (node.id === id) return node;
-    if (node.children) {
-      for (const child of node.children) {
-        if (child.type === "folder") {
-          const found = findNodeById(child, id);
-          if (found) return found;
-        }
-      }
-    }
-    return null;
-  };
-
-  const navigateToBreadcrumb = (folderId: string) => {
-    const target = findNodeById(rootRef.current, folderId);
-    if (!target || target.type !== "folder") return;
-
-    const buildPath = (node: VaultNode, id: string, acc: VaultNode[] = []): VaultNode[] | null => {
-      if (node.id === id) return acc;
-      if (node.children) {
-        for (const child of node.children) {
-          if (child.type === "folder") {
-            const result = buildPath(child, id, [...acc, node]);
-            if (result) return result;
-          }
-        }
-      }
-      return null;
-    };
-
-    const path = buildPath(rootRef.current, target.id, []);
-    if (path) {
-      setHistory(path.filter((f) => f.id !== "root"));
-      setCurrentFolder(target);
-    }
-  };
-
-  // ---------- render helpers ----------
-  const renderBreadcrumb = () => {
-    const path = [rootRef.current, ...history, currentFolder];
-    const unique = path.filter((v, i, a) => a.findIndex((p) => p.id === v.id) === i);
-
-    return (
-      <div className="path-simple">
-        {unique.map((node, idx) => (
-          <React.Fragment key={node.id}>
-            {idx > 0 && <span className="sep">/</span>}
-            {idx === unique.length - 1 ? (
-              <span className="current">
-                <i className="fas fa-folder-open"></i> {node.id === "root" ? "vault" : node.name}
-              </span>
-            ) : (
-              <span className="crumb" onClick={() => navigateToBreadcrumb(node.id)}>
-                {node.id === "root" ? <i className="fas fa-home"></i> : <i className="fas fa-folder"></i>}
-                {node.id === "root" ? "vault" : node.name}
-              </span>
-            )}
-          </React.Fragment>
-        ))}
-      </div>
-    );
-  };
-
-  const renderGrid = () => {
-    if (!currentFolder.children || currentFolder.children.length === 0) {
-      return (
-        <div className="empty-message">
-          <i className="fas fa-cloud-upload-alt" style={{ fontSize: "3rem", marginBottom: "16px", display: "block" }}></i>
-          <h3>This folder is empty</h3>
-          <p>Drag files here or use the "New" buttons below</p>
-        </div>
-      );
-    }
-
-    const sorted = [...currentFolder.children].sort((a, b) => {
-      if (a.type === "folder" && b.type !== "folder") return -1;
-      if (a.type !== "folder" && b.type === "folder") return 1;
-      return a.name.localeCompare(b.name);
-    });
-
-    return (
-      <div className="grid">
-        {sorted.map((node) => {
-          const isFolder = node.type === "folder";
-          const iconName = getIcon(node.ext, isFolder);
-          return (
-            <div
-              key={node.id}
-              className={`item ${isFolder ? "folder" : "file"}`}
-              onClick={() => (isFolder ? openFolder(node) : alert(`Preview: ${node.name}`))}
-            >
-              <div className="icon">
-                <i className={`fas ${iconName}`}></i>
-              </div>
-              <div className="name">{node.name}</div>
-              <div className="meta">
-                <span>{isFolder ? "Folder" : `${node.size} KB`}</span>
-                {isFolder && node.children && <span className="count">{node.children.length}</span>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
+  // Handle outside click for menu
   useEffect(() => {
-    if (showFolderModal) folderNameInput.current?.focus();
-    if (showFileModal) fileNameInput.current?.focus();
-  }, [showFolderModal, showFileModal]);
+    const closeMenu = (e: MouseEvent) => {
+      if (activeMenu && !(e.target as HTMLElement).closest(".item-actions-menu, .item-actions-trigger")) {
+        setActiveMenu(null);
+      }
+    };
+    document.addEventListener("mousedown", closeMenu);
+    return () => document.removeEventListener("mousedown", closeMenu);
+  }, [activeMenu]);
 
   return (
     <div className="app-container">
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div className="logo" onClick={resetToRoot}>
-          <i className="fas fa-lock"></i>
-          <span>vault</span>
-        </div>
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />}
 
+      <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`} onKeyDown={(e) => e.key === 'Escape' && setIsSidebarOpen(false)}>
+        <div 
+          className="logo" 
+          onClick={() => { setActiveFilter("all"); setCurrentFolderId("root"); setIsSidebarOpen(false); }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setActiveFilter("all"); setCurrentFolderId("root"); setIsSidebarOpen(false); } }}
+          role="button"
+          tabIndex={0}
+        >
+          <i className="fas fa-shield-alt"></i> <span>VAULT</span>
+        </div>
         <nav className="side-nav">
           <div className="nav-group">
-            <label>Menu</label>
-            <div className={`nav-item ${currentFolder.id === 'root' ? 'active' : ''}`} onClick={resetToRoot}>
-              <i className="fas fa-th-large"></i> All Files
+            <label>Library</label>
+            <div 
+              className={`nav-item ${activeFilter === "all" ? "active" : ""}`} 
+              onClick={() => { setActiveFilter("all"); setIsSidebarOpen(false); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setActiveFilter("all"); setIsSidebarOpen(false); } }}
+              role="button"
+              tabIndex={0}
+            >
+              <i className="fas fa-hdd"></i> All Files
             </div>
-            <div className="nav-item">
-              <i className="fas fa-clock"></i> Recent
-            </div>
-            <div className="nav-item">
+            <div 
+              className={`nav-item ${activeFilter === "favorites" ? "active" : ""}`} 
+              onClick={() => { setActiveFilter("favorites"); setIsSidebarOpen(false); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setActiveFilter("favorites"); setIsSidebarOpen(false); } }}
+              role="button"
+              tabIndex={0}
+            >
               <i className="fas fa-star"></i> Favorites
             </div>
-            <div className="nav-item">
-              <i className="fas fa-trash"></i> Trash
+            <div 
+              className={`nav-item ${activeFilter === "trash" ? "active" : ""}`} 
+              onClick={() => { setActiveFilter("trash"); setIsSidebarOpen(false); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setActiveFilter("trash"); setIsSidebarOpen(false); } }}
+              role="button"
+              tabIndex={0}
+            >
+              <i className="fas fa-trash-alt"></i> Trash
             </div>
           </div>
         </nav>
-
         <div className="storage-card">
           <div className="storage-info">
-            <span>Storage</span>
-            <span>42% used</span>
+            <span>Storage Used</span>
+            <span>45%</span>
           </div>
           <div className="progress-bar">
-            <div className="progress-fill" style={{ width: "42%" }}></div>
+            <div className="progress-fill" style={{ width: '45%' }}></div>
           </div>
         </div>
       </aside>
 
-      {/* MAIN VIEW */}
       <main className="vault-main">
         <header className="top-bar">
-          {renderBreadcrumb()}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>
+              <i className="fas fa-bars"></i>
+            </button>
+            <div className="path-simple">
+              {path.map((n, i) => (
+                <React.Fragment key={n.id}>
+                  {i < path.length - 1 ? (
+                    <button className="crumb" onClick={() => setCurrentFolderId(n.id)}>
+                      {n.id === "root" ? <i className="fas fa-home"></i> : n.name}
+                    </button>
+                  ) : (
+                    <span className="current">
+                      {n.id === "root" ? <i className="fas fa-home"></i> : n.name}
+                    </span>
+                  )}
+                  {i < path.length - 1 && <span className="sep">/</span>}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
           <div className="trust">
-            <i className="fas fa-shield-check"></i> client‑side encryption
+            <i className="fas fa-lock"></i> AES-256 Protected
           </div>
         </header>
 
         <section className="scroll-area">
-          {renderGrid()}
+          <div className="grid">
+            {(activeFilter === "all" 
+                ? (currentFolder.children || []) 
+                : activeFilter === "favorites" 
+                ? getAllNodes(rootNode).filter(n => n.is_favorite && !n.is_trashed)
+                : getAllNodes(rootNode).filter(n => n.is_trashed)
+            ).map((node) => {
+              const isFolder = node.type === "folder";
+              return (
+                <div
+                  key={node.id}
+                  className={`item ${isFolder ? "folder" : "file"}`}
+                  onClick={() => isFolder && activeFilter === "all" && setCurrentFolderId(node.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (isFolder && activeFilter === 'all') setCurrentFolderId(node.id); } }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  
+                  {/* Action Trigger */}
+                  <button className="item-actions-trigger" onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === node.id ? null : node.id); }}>
+                    <i className="fas fa-ellipsis-h"></i>
+                  </button>
+
+                  {/* Context Menu */}
+                  {activeMenu === node.id && (
+                    <div className="item-actions-menu" onClick={(e) => e.stopPropagation()}>
+                      {node.is_trashed ? (
+                        <>
+                          <button onClick={() => patchNode(Number(node.id), { is_trashed: false })}>
+                            <i className="fas fa-undo"></i> Restore
+                          </button>
+                          <button className="danger" onClick={() => deletePermanently(node.id)}>
+                            <i className="fas fa-times"></i> Delete
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => { setModalConfig({ show: true, type: "rename", node }); setActiveMenu(null); }}>
+                            <i className="fas fa-pencil-alt"></i> Rename
+                          </button>
+                          <button onClick={() => patchNode(Number(node.id), { is_favorite: !node.is_favorite })}>
+                            <i className={`fas fa-star ${node.is_favorite ? 'favorited' : ''}`}></i> 
+                            {node.is_favorite ? "Unstar" : "Favorite"}
+                          </button>
+                          <button className="danger" onClick={() => patchNode(Number(node.id), { is_trashed: true })}>
+                            <i className="fas fa-trash-alt"></i> Trash
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="icon">
+                    <i className={`fas ${getIcon(node.ext, isFolder)}`}></i>
+                  </div>
+                  <div className="name">
+                    {node.name}
+                    {node.is_favorite && <i className="fas fa-star favorite-star"></i>}
+                  </div>
+                  <div className="meta">
+                    <span>{isFolder ? "Folder" : (node.ext || "File")}</span>
+                    {isFolder && <span className="count">{node.children?.length || 0}</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </section>
 
         <footer className="footer-actions">
+          <div className="signature">
+            <i className="fas fa-check-double"></i> Cloud Sync Ready
+          </div>
           <div className="action-buttons">
-            <button className="btn btn-primary" onClick={() => setShowFolderModal(true)}>
-              <i className="fas fa-folder-plus"></i> New Folder
-            </button>
-            <button className="btn" onClick={() => setShowFileModal(true)}>
-              <i className="fas fa-file-medical"></i> New File
-            </button>
-            <button className="btn" onClick={goBack} disabled={history.length === 0}>
+            <button className="btn" disabled={history.length === 0} onClick={() => history.length > 0 && setCurrentFolderId(history[history.length - 1].id)}>
               <i className="fas fa-chevron-left"></i> Back
             </button>
+            <button className="btn" onClick={() => setModalConfig({ show: true, type: "file" })}>
+              <i className="fas fa-file-medical"></i> New File
+            </button>
+            <button className="btn btn-primary" onClick={() => setModalConfig({ show: true, type: "folder" })}>
+              <i className="fas fa-folder-plus"></i> New Folder
+            </button>
           </div>
-          <span className="signature">
-            <i className="fas fa-fingerprint"></i> End-to-end encrypted
-          </span>
         </footer>
       </main>
 
-      {/* MODALS */}
-      {showFolderModal && (
-        <div className="modal" onClick={() => setShowFolderModal(false)}>
+      {/* Modal Overlay */}
+      {modalConfig.show && (
+        <div className="modal" onClick={() => setModalConfig({ ...modalConfig, show: false })}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <h3>New Folder</h3>
-            <input
-              ref={folderNameInput}
-              type="text"
-              className="modal-input"
-              placeholder="Enter folder name"
+            <h3>{modalConfig.type === "rename" ? "Rename Item" : `Create ${modalConfig.type}`}</h3>
+            <input 
+              className="modal-input" 
+              autoFocus 
+              defaultValue={modalConfig.node?.name || ""} 
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  createFolderInCurrent(e.currentTarget.value);
-                  setShowFolderModal(false);
+                if(e.key === 'Enter') {
+                  const val = (e.currentTarget as HTMLInputElement).value;
+                  if (modalConfig.type === "rename") patchNode(Number(modalConfig.node?.id), { name: val });
+                  else createNode(val, modalConfig.type as "folder" | "file");
                 }
               }}
             />
             <div className="modal-actions">
-              <button className="modal-btn" onClick={() => setShowFolderModal(false)}>Cancel</button>
-              <button className="modal-btn modal-btn-primary" onClick={() => {
-                createFolderInCurrent(folderNameInput.current?.value || "");
-                setShowFolderModal(false);
-              }}>Create</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showFileModal && (
-        <div className="modal" onClick={() => setShowFileModal(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <h3>New File</h3>
-            <input
-              ref={fileNameInput}
-              type="text"
-              className="modal-input"
-              placeholder="e.g. document.txt"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  createFileInCurrent(e.currentTarget.value);
-                  setShowFileModal(false);
-                }
-              }}
-            />
-            <div className="modal-actions">
-              <button className="modal-btn" onClick={() => setShowFileModal(false)}>Cancel</button>
-              <button className="modal-btn modal-btn-primary" onClick={() => {
-                createFileInCurrent(fileNameInput.current?.value || "");
-                setShowFileModal(false);
-              }}>Create</button>
+              <button className="modal-btn" onClick={() => setModalConfig({ ...modalConfig, show: false })}>Cancel</button>
+              <button className="modal-btn modal-btn-primary" onClick={(e) => {
+                const input = e.currentTarget.parentElement?.previousElementSibling as HTMLInputElement;
+                const val = input.value;
+                if (modalConfig.type === "rename") patchNode(Number(modalConfig.node?.id), { name: val });
+                else createNode(val, modalConfig.type as "folder" | "file");
+              }}>OK</button>
             </div>
           </div>
         </div>
