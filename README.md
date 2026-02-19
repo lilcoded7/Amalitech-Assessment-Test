@@ -61,17 +61,7 @@ Open:
 
 > ⚠️ Ensure the Django backend server is running for full functionality.
 
----
 
-## 🔧 Environment Variable (Optional)
-
-Create a `.env.local` file:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
----
 
 ## 👨‍💻 Author
 
