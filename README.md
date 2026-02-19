@@ -1,34 +1,104 @@
-# Amalitech Assessment Test – Secure Vault (Frontend)
 
-🚀 **Live Demo:**
+---
+
+# SecureVault-Dashboard
+
+🚀 **Live Demo**
 [https://amalitech-assessment-test-secur-vau.vercel.app/accounts/login](https://amalitech-assessment-test-secur-vau.vercel.app/accounts/login)
 
-**BACKEND LINK:**
-[https://github.com/lilcoded7/amalithech-sure-cure-vault-test/blob/main/README.md]
-
-This repository contains the frontend for the Secure Vault application built as part of the Amalitech Assessment Test.
+🔗 **Backend Repository**
+[https://github.com/lilcoded7/amalithech-sure-cure-vault-test](https://github.com/lilcoded7/amalithech-sure-cure-vault-test)
 
 ---
 
-## 🏗️ Architecture
+## 📌 Project Overview
 
-This project follows a microservices-style architecture:
+**SecureVault-Dashboard** was built for *SecureVault Inc. (Enterprise Cloud Security)* as part of the Amalitech Assessment Test.
+
+The objective was to design and implement a modern, high-performance **File Explorer Dashboard** capable of handling deeply nested folder structures while maintaining performance, usability, and accessibility.
+
+Although this was primarily a frontend challenge, I implemented a microservices-style architecture:
 
 * **Frontend:** Next.js + TypeScript
-* **Backend API:** Django
+* **Backend API:** Django (REST API)
 * **Deployment:** Vercel
 
-The frontend communicates with the Django backend via REST API endpoints.
+The frontend communicates with the Django backend via secure API endpoints.
 
 ---
 
-## ✨ Features
+### Design System Includes:
 
-* Authentication interface (Login page)
-* API integration with Django backend
-* Responsive design
-* Type-safe development with TypeScript
-* Independent frontend & backend deployment
+* Typography scale
+* Color palette (Dark Mode)
+* Spacing grid
+* Component states (hover, active, focus, selected)
+
+### 🔗 Design File
+
+(Add your Figma link here)
+
+### 🖼️ Design Preview
+
+*Add your Figma export images below:*
+
+![Design System](./public/designs/design-system.png)
+
+![Dashboard UI](./public/designs/dashboard-ui.png)
+
+---
+
+## 🏗️ Phase 2 – Implementation
+
+### 1️⃣ Recursive File Explorer
+
+* Renders folder structure dynamically from JSON/API data
+* Fully recursive component architecture
+* Supports unlimited nesting depth
+* Expand/Collapse without page reload
+
+### 2️⃣ File Details Panel
+
+* Click to select file
+* Displays metadata (Name, Type, Size)
+* Distinct visual selection state
+
+### 3️⃣ Keyboard Accessibility
+
+* ↑ / ↓ → Navigate visible items
+* → Expand folder
+* ← Collapse folder
+* Enter → Select file
+
+---
+
+## ⭐ Wildcard Feature – Innovation Clause
+
+**Feature Implemented:**
+(Add your custom feature here)
+
+**Business Value:**
+Briefly explain how it improves user experience, scalability, or enterprise workflow efficiency.
+
+---
+
+## 🧠 Recursive Strategy
+
+The file explorer is built using a recursive component pattern.
+
+Each folder component:
+
+* Receives its own children
+* Calls itself for nested folders
+* Maintains local expansion state
+* Propagates selection state upward when required
+
+This ensures:
+
+* Clean abstraction
+* Infinite depth handling
+* Efficient rendering
+* Maintainable component structure
 
 ---
 
@@ -53,15 +123,28 @@ npm install
 npm run dev
 ```
 
-Open:
-`http://localhost:3000`
+Visit:
 
-> ⚠️ Ensure the Django backend server is running for full functionality.
+```
+http://localhost:3000
+```
 
+⚠️ Ensure the Django backend server is running for full functionality.
 
+---
+
+## 🛠 Tech Stack
+
+* Next.js
+* TypeScript
+* Custom CSS (No UI Component Libraries)
+* Django REST API
+
+---
 
 ## 👨‍💻 Author
 
-Developed as part of the Amalitech Assessment Test.
+Developed as part of the Amalitech Assessment Test – SecureVault Challenge.
 
 ---
+
