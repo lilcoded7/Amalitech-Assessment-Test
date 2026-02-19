@@ -43,6 +43,7 @@ export default function Vault() {
   }>({ show: false, type: "folder" });
   const [editingNode, setEditingNode] = useState<VaultNode | null>(null);
   const [editorContent, setEditorContent] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleLogout = () => {
     localStorage.removeItem("vault_token");
@@ -220,6 +221,31 @@ export default function Vault() {
     return icons[ext || ""] || "fa-file";
   };
 
+  const getDisplayNodes = () => {
+    let nodes: VaultNode[] = [];
+    const q = searchQuery.toLowerCase().trim();
+
+    if (activeFilter === "all") {
+      if (q) {
+        // Global search when searching in "all" mode
+        nodes = getAllNodes(rootNode).filter((n) => !n.is_trashed);
+      } else {
+        nodes = currentFolder.children || [];
+      }
+    } else if (activeFilter === "favorites") {
+      nodes = getAllNodes(rootNode).filter(
+        (n) => n.is_favorite && !n.is_trashed,
+      );
+    } else {
+      nodes = getAllNodes(rootNode).filter((n) => n.is_trashed);
+    }
+
+    if (q) {
+      nodes = nodes.filter((n) => n.name.toLowerCase().includes(q));
+    }
+    return nodes;
+  };
+
   // Handle outside click for menu
   useEffect(() => {
     const closeMenu = (e: MouseEvent) => {
@@ -334,7 +360,7 @@ export default function Vault() {
 
       <main className="vault-main">
         <header className="top-bar">
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", flex: 1 }}>
             <button
               className="menu-toggle"
               onClick={() => setIsSidebarOpen(true)}
@@ -378,6 +404,38 @@ export default function Vault() {
               ))}
             </div>
           </div>
+
+          <div
+            className="search-bar"
+            style={{ margin: "0 20px", position: "relative" }}
+          >
+            <i
+              className="fas fa-search"
+              style={{
+                position: "absolute",
+                left: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "#888",
+                fontSize: "0.9rem",
+              }}
+            ></i>
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                padding: "8px 10px 8px 35px",
+                borderRadius: "20px",
+                border: "1px solid #ddd",
+                outline: "none",
+                width: "200px",
+                fontSize: "0.9rem",
+              }}
+            />
+          </div>
+
           <div className="trust">
             <i className="fas fa-lock"></i> AES-256 Protected
           </div>
@@ -385,14 +443,7 @@ export default function Vault() {
 
         <section className="scroll-area">
           <div className="grid">
-            {(activeFilter === "all"
-              ? currentFolder.children || []
-              : activeFilter === "favorites"
-                ? getAllNodes(rootNode).filter(
-                    (n) => n.is_favorite && !n.is_trashed,
-                  )
-                : getAllNodes(rootNode).filter((n) => n.is_trashed)
-            ).map((node, index) => {
+            {getDisplayNodes().map((node, index) => {
               const isFolder = node.type === "folder";
               return (
                 <div
