@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create the base instance
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api', // Base URL to cover both v1 and v2
+  baseURL: 'https://amalitechsecurevault.pythonanywhere.com/api', // Base URL to cover both v1 and v2
   headers: {
     'Content-Type': 'application/json',
   },

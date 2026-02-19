@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginUser } from "@/services/apis"; // Using our axios setup
-import api from "@/lib/axios";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,9 +29,11 @@ export default function LoginPage() {
         // Redirect to the vault dashboard
         router.push("/vault");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } };
       setError(
-        err.response?.data?.detail || "Invalid credentials. Please try again.",
+        error.response?.data?.detail ||
+          "Invalid credentials. Please try again.",
       );
     } finally {
       setLoading(false);

@@ -1,6 +1,3 @@
-// src/types/splide.d.ts
-// Custom TypeScript definitions for @splidejs/react-splide
-// Fixes "Could not find a declaration file for module '@splidejs/react-splide'"
 
 import { ReactNode } from "react";
 

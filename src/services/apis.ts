@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import api from '../lib/axios';
 
 // Authentication
@@ -14,4 +15,16 @@ export const getNodes = (parentId?: string) => {
 
 export const createNode = (nodeData: any) => {
   return api.post('/v2/vault/nodes/', nodeData);
+};
+
+export const getNode = (id: string | number) => {
+  return api.get(`/v2/vault/nodes/${id}/`);
+};
+
+export const updateNode = (id: string | number, data: any) => {
+  return api.patch(`/v2/vault/nodes/${id}/`, data);
+};
+
+export const deleteNode = (id: string | number) => {
+  return api.delete(`/v2/vault/nodes/${id}/`);
 };
