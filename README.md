@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Got it ✅ — here’s a **clean, short, and professional** version without too much detail.
 
-## Getting Started
+You can use this as your final README:
 
-First, run the development server:
+---
+
+# Amalitech Assessment Test – Secure Vault (Frontend)
+
+🚀 **Live Demo:**
+[https://amalitech-assessment-test-secur-vau.vercel.app/accounts/login](https://amalitech-assessment-test-secur-vau.vercel.app/accounts/login)
+
+This repository contains the frontend for the Secure Vault application built as part of the Amalitech Assessment Test.
+
+---
+
+## 🏗️ Architecture
+
+This project follows a microservices-style architecture:
+
+* **Frontend:** Next.js + TypeScript
+* **Backend API:** Django
+* **Deployment:** Vercel
+
+The frontend communicates with the Django backend via REST API endpoints.
+
+---
+
+## ✨ Features
+
+* Authentication interface (Login page)
+* API integration with Django backend
+* Responsive design
+* Type-safe development with TypeScript
+* Independent frontend & backend deployment
+
+---
+
+## 📦 Getting Started
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/lilcoded7/Amalitech-Assessment-Test.git
+cd Amalitech-Assessment-Test
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
+`http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> ⚠️ Ensure the Django backend server is running for full functionality.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🔧 Environment Variable (Optional)
 
-To learn more about Next.js, take a look at the following resources:
+Create a `.env.local` file:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 👨‍💻 Author
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Developed as part of the Amalitech Assessment Test.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
