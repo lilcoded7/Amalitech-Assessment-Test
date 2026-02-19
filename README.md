@@ -1,9 +1,3 @@
-Got it ✅ — here’s a **clean, short, and professional** version without too much detail.
-
-You can use this as your final README:
-
----
-
 # Amalitech Assessment Test – Secure Vault (Frontend)
 
 🚀 **Live Demo:**
