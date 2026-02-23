@@ -6,6 +6,9 @@
 🚀 **Live Demo**
 [https://amalitech-assessment-test-secur-vau.vercel.app/accounts/login](https://amalitech-assessment-test-secur-vau.vercel.app/accounts/login)
 
+login: admin@gmail.com
+password: thethethe
+
 🔗 **Backend Repository**
 [https://github.com/lilcoded7/amalithech-sure-cure-vault-test](https://github.com/lilcoded7/amalithech-sure-cure-vault-test)
 
