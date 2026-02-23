@@ -1,36 +1,150 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+---
 
-First, run the development server:
+# SecureVault-Dashboard
+
+🚀 **Live Demo**
+[https://amalitech-assessment-test-secur-vau.vercel.app/accounts/login](https://amalitech-assessment-test-secur-vau.vercel.app/accounts/login)
+
+🔗 **Backend Repository**
+[https://github.com/lilcoded7/amalithech-sure-cure-vault-test](https://github.com/lilcoded7/amalithech-sure-cure-vault-test)
+
+---
+
+## 📌 Project Overview
+
+**SecureVault-Dashboard** was built for *SecureVault Inc. (Enterprise Cloud Security)* as part of the Amalitech Assessment Test.
+
+The objective was to design and implement a modern, high-performance **File Explorer Dashboard** capable of handling deeply nested folder structures while maintaining performance, usability, and accessibility.
+
+Although this was primarily a frontend challenge, I implemented a microservices-style architecture:
+
+* **Frontend:** Next.js + TypeScript
+* **Backend API:** Django (REST API)
+* **Deployment:** Vercel
+
+The frontend communicates with the Django backend via secure API endpoints.
+
+---
+
+### Design System Includes:
+
+* Typography scale
+* Color palette (Dark Mode)
+* Spacing grid
+* Component states (hover, active, focus, selected)
+
+### 🔗 Design File
+
+(Add your Figma link here)
+
+### 🖼️ Design Preview
+
+*Add your Figma export images below:*
+
+![Design System](./public/designs/design-system.png)
+
+![Dashboard UI](./public/designs/dashboard-ui.png)
+
+---
+
+## 🏗️ Phase 2 – Implementation
+
+### 1️⃣ Recursive File Explorer
+
+* Renders folder structure dynamically from JSON/API data
+* Fully recursive component architecture
+* Supports unlimited nesting depth
+* Expand/Collapse without page reload
+
+### 2️⃣ File Details Panel
+
+* Click to select file
+* Displays metadata (Name, Type, Size)
+* Distinct visual selection state
+
+### 3️⃣ Keyboard Accessibility
+
+* ↑ / ↓ → Navigate visible items
+* → Expand folder
+* ← Collapse folder
+* Enter → Select file
+
+---
+
+## ⭐ Wildcard Feature – Innovation Clause
+
+**Feature Implemented:**
+(Add your custom feature here)
+
+**Business Value:**
+Briefly explain how it improves user experience, scalability, or enterprise workflow efficiency.
+
+---
+
+## 🧠 Recursive Strategy
+
+The file explorer is built using a recursive component pattern.
+
+Each folder component:
+
+* Receives its own children
+* Calls itself for nested folders
+* Maintains local expansion state
+* Propagates selection state upward when required
+
+This ensures:
+
+* Clean abstraction
+* Infinite depth handling
+* Efficient rendering
+* Maintainable component structure
+
+---
+
+## 📦 Getting Started
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/lilcoded7/Amalitech-Assessment-Test.git
+cd Amalitech-Assessment-Test
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+⚠️ Ensure the Django backend server is running for full functionality.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠 Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* Next.js
+* TypeScript
+* Custom CSS (No UI Component Libraries)
+* Django REST API
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 👨‍💻 Author
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Developed as part of the Amalitech Assessment Test – SecureVault Challenge.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+

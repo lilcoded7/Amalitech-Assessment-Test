@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 
@@ -44,6 +44,7 @@ export default function Vault() {
   const [editingNode, setEditingNode] = useState<VaultNode | null>(null);
   const [editorContent, setEditorContent] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const handleLogout = () => {
     localStorage.removeItem("vault_token");
@@ -262,6 +263,75 @@ export default function Vault() {
     return () => document.removeEventListener("mousedown", closeMenu);
   }, [activeMenu]);
 
+  const displayNodes = getDisplayNodes();
+  itemRefs.current = [];
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+      return;
+    }
+
+    const total = displayNodes.length;
+    if (total === 0) {
+      return;
+    }
+
+    e.preventDefault();
+
+    const activeEl = document.activeElement as HTMLElement;
+    const currentIndex = displayNodes.findIndex(
+      (_, i) => itemRefs.current[i] === activeEl,
+    );
+
+    if (currentIndex === -1) {
+      // If no item is focused, focus the first one.
+      if (itemRefs.current[0]) {
+        itemRefs.current[0].focus();
+      }
+      return;
+    }
+
+    let nextIndex = currentIndex;
+    let columns = 1;
+
+    // Calculate number of columns for grid navigation
+    if (itemRefs.current[0] && itemRefs.current[1]) {
+      const firstTop = itemRefs.current[0].offsetTop;
+      if (itemRefs.current[1].offsetTop === firstTop) {
+        for (let i = 1; i < total; i++) {
+          if (itemRefs.current[i]?.offsetTop !== firstTop) break;
+          columns++;
+        }
+      }
+    }
+
+    switch (e.key) {
+      case "ArrowRight":
+        nextIndex = Math.min(currentIndex + 1, total - 1);
+        break;
+      case "ArrowLeft":
+        nextIndex = Math.max(currentIndex - 1, 0);
+        break;
+      case "ArrowDown":
+        if (currentIndex + columns < total) {
+          nextIndex = currentIndex + columns;
+        }
+        break;
+      case "ArrowUp":
+        if (currentIndex - columns >= 0) {
+          nextIndex = currentIndex - columns;
+        }
+        break;
+    }
+
+    if (nextIndex !== currentIndex) {
+      const nextEl = itemRefs.current[nextIndex];
+      if (nextEl) {
+        nextEl.focus();
+      }
+    }
+  };
+
   return (
     <div className="app-container">
       {isSidebarOpen && (
@@ -442,12 +512,15 @@ export default function Vault() {
         </header>
 
         <section className="scroll-area">
-          <div className="grid">
-            {getDisplayNodes().map((node, index) => {
+          <div className="grid" onKeyDown={handleKeyDown}>
+            {displayNodes.map((node, index) => {
               const isFolder = node.type === "folder";
               return (
                 <div
                   key={node.id ?? `node-${index}`}
+                  ref={(el) => {
+                    itemRefs.current[index] = el;
+                  }}
                   className={`item ${isFolder ? "folder" : "file"}`}
                   onClick={() =>
                     isFolder
