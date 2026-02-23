@@ -40,11 +40,12 @@ The frontend communicates with the Django backend via secure API endpoints.
 
 ### 🖼️ Design Preview
 
-*Add your Figma export images below:*
+![Figma Export 1](https://raw.githubusercontent.com/lilcoded7/Amalitech-Assessment-Test/dbb90d2615a56b2de82575c5438d6459d9a927d9/IMG_4379.jpeg)
+![Figma Export 2](https://raw.githubusercontent.com/lilcoded7/Amalitech-Assessment-Test/dbb90d2615a56b2de82575c5438d6459d9a927d9/IMG_4380.png)
+![Figma Export 3](https://raw.githubusercontent.com/lilcoded7/Amalitech-Assessment-Test/dbb90d2615a56b2de82575c5438d6459d9a927d9/IMG_4381.png)
+![Figma Export 4](https://raw.githubusercontent.com/lilcoded7/Amalitech-Assessment-Test/dbb90d2615a56b2de82575c5438d6459d9a927d9/IMG_6827.jpeg)
+![Figma Export 5](https://raw.githubusercontent.com/lilcoded7/Amalitech-Assessment-Test/dbb90d2615a56b2de82575c5438d6459d9a927d9/IMG_6828.jpeg)
 
-![Design System](./public/designs/design-system.png)
-
-![Dashboard UI](./public/designs/dashboard-ui.png)
 
 ---
 
